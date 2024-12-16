@@ -123,7 +123,10 @@ def reset_game():
     current_player = "X"
     canvas.delete("all")
     draw_board()
-
+def switch():
+    game_frame.pack_forget()
+    menu_frame.pack()   
+    #function for button 
 def update_scores():
     score_label.config(text=f"Player X: {scores['X']}  |  Player O: {scores['O']}")
 
@@ -187,5 +190,7 @@ score_label.pack(pady=10)
 
 restart_button = tk.Button(game_frame, text="Restart Game", font=("Arial", 16), command=reset_game, bg="orange")
 restart_button.pack(pady=10)
+restart_button = tk.Button(game_frame, text="Switch Mode", font=("Arial", 14), command=switch, bg="orange")
+restart_button.pack(pady=10)      #button of returning to modes
 
 root.mainloop()
