@@ -161,6 +161,9 @@ def handle_click(event):
 # Initialize the game
 board = create_board()
 
+# Initialize the game
+board = create_board()
+# GUI SECTION
 # Create the GUI
 root = tk.Tk()
 root.title("Connect 4")
@@ -169,28 +172,45 @@ root.configure(bg="#f0f0f0")
 # Menu Frame
 menu_frame = tk.Frame(root, bg="#f0f0f0")
 menu_frame.pack()
-
+# Button for Player vs AI mode
+# When clicked, it calls choose_mode("AI") and navigates to the difficulty selection screen.
 tk.Label(menu_frame, text="Choose Game Mode", font=("Arial", 20), bg="#f0f0f0").pack(pady=10)
 tk.Button(menu_frame, text="Player vs Player", font=("Arial", 16),
           command=lambda: choose_mode("PvP"), bg="lightgreen", width=20).pack(pady=5)
 tk.Button(menu_frame, text="Player vs AI", font=("Arial", 16),
           command=lambda: choose_mode("AI"), bg="lightblue", width=20).pack(pady=5)
 
-# Game Frame
-game_frame = tk.Frame(root, bg="#f0f0f0")
+# Difficulty Frame
+difficulty_frame = tk.Frame(root, bg="#f0f0f0")
+# Add a label for difficulty selection
+tk.Label(difficulty_frame, text="Select Difficulty", font=("Arial", 20), bg="#f0f0f0").pack(pady=10)
+# Button for Easy difficulty
+tk.Button(difficulty_frame, text="Easy", font=("Arial", 16),
+          command=lambda: choose_difficulty("Easy"), bg="lightgreen", width=20).pack(pady=5)
+# Button for Advanced difficulty
+tk.Button(difficulty_frame, text="Advanced", font=("Arial", 16),
+          command=lambda: choose_difficulty("Advanced"), bg="red", width=20).pack(pady=5)
 
+# Game Frame
+game_frame = tk.Frame(root, bg="#f0f0f0") # Create the frame for the game board
+
+# Canvas for drawing the Connect 4 board
+# Each circle represents a slot on the board. It responds to mouse clicks to drop pieces
 canvas = tk.Canvas(game_frame, width=COLUMNS * 100, height=ROWS * 100, bg="blue")
 canvas.pack()
 canvas.bind("<Button-1>", handle_click)
 
+# Draw the initial empty board
 draw_board()
-
+# Label for showing the current scores of both players
 score_label = tk.Label(game_frame, text=f"Player X: 0  |  Player O: 0", font=("Arial", 16), bg="#f0f0f0")
-score_label.pack(pady=10)
+score_label.pack(pady=10) # Add some padding for better spacing
 
+# This button allows the user to reset the game at any time. It calls the reset_game() function.
 restart_button = tk.Button(game_frame, text="Restart Game", font=("Arial", 16), command=reset_game, bg="orange")
 restart_button.pack(pady=10)
 restart_button = tk.Button(game_frame, text="Switch Mode", font=("Arial", 14), command=switch, bg="orange")
 restart_button.pack(pady=10)      #button of returning to modes
-
 root.mainloop()
+
+
