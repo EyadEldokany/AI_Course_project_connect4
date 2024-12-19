@@ -11,7 +11,7 @@ current_player = "X"
 board = []
 player_vs_ai = False
 scores = {"X": 0, "O": 0}
-AI_DEPTH = 3  # Limit Minimax depth for performance
+AI_DEPTH = 0  # Limit Minimax depth for performance
 
 def create_board():
     return [[" " for _ in range(COLUMNS)] for _ in range(ROWS)]
@@ -56,36 +56,114 @@ def drop_piece_in_simulation(board, column, piece):
             return True
     return False
 
-def minimax(board, depth, maximizing_player):
-    if check_win(board, "O"):
-        return (None, 100000)
-    if check_win(board, "X"):
-        return (None, -100000)
-    if is_draw(board) or depth == 0:
-        return (None, 0)
+def evaluate_board(board):
+    """Evaluate the board for AI advantage."""
+    score = 0
 
+    # Score center column higher as it allows more winning possibilities
+    center_column = [board[row][COLUMNS // 2] for row in range(ROWS)]
+    center_count = center_column.count("O")
+    score += center_count * 3
+
+    # Check all rows for potential
+    for row in range(ROWS):
+        row_array = board[row]
+        for col in range(COLUMNS - 3):
+            window = row_array[col:col + 4]
+            score += evaluate_window(window, "O")
+            score -= evaluate_window(window, "X")
+
+    # Check all columns for potential
+    for col in range(COLUMNS):
+        col_array = [board[row][col] for row in range(ROWS)]
+        for row in range(ROWS - 3):
+            window = col_array[row:row + 4]
+            score += evaluate_window(window, "O")
+            score -= evaluate_window(window, "X")
+
+    # Check all positive diagonals for potential
+    for row in range(ROWS - 3):
+        for col in range(COLUMNS - 3):
+            window = [board[row + i][col + i] for i in range(4)]
+            score += evaluate_window(window, "O")
+            score -= evaluate_window(window, "X")
+
+    # Check all negative diagonals for potential
+    for row in range(3, ROWS):
+        for col in range(COLUMNS - 3):
+            window = [board[row - i][col + i] for i in range(4)]
+            score += evaluate_window(window, "O")
+            score -= evaluate_window(window, "X")
+
+    return score
+
+def evaluate_window(window, piece):
+    """Evaluate a window of four cells."""
+    score = 0
+    opp_piece = "X" if piece == "O" else "O"
+
+    if window.count(piece) == 4:
+        score += 100
+    elif window.count(piece) == 3 and window.count(" ") == 1:
+        score += 10
+    elif window.count(piece) == 2 and window.count(" ") == 2:
+        score += 5
+
+    if window.count(opp_piece) == 3 and window.count(" ") == 1:
+        score -= 80  # Block opponent's winning moves aggressively
+
+    return score
+
+def minimax(board, depth, maximizing_player):
+        # Get all valid columns where a piece can be dropped
     valid_columns = get_valid_columns(board)
-    if maximizing_player:
-        value = -float("inf")
-        best_column = random.choice(valid_columns)
+
+    # Base case: Check if the game is over (win, loss, or draw) or depth limit reached
+    if check_win(board, "O"):  # If AI (O) wins, return a very high score
+        return (None, float("inf"))
+    if check_win(board, "X"):  # If player (X) wins, return a very low score
+        return (None, -float("inf"))
+    if is_draw(board) or depth == 0:  # If it's a draw or depth is 0, evaluate the board
+        return (None, evaluate_board(board))
+
+    # Recursive case: Explore the game tree
+    if maximizing_player:  # AI's turn (maximize score)
+        value = -float("inf")  # Start with the worst possible score
+        best_column = random.choice(valid_columns)  # Pick a random valid column initially
+
+        # Iterate through all valid columns
         for column in valid_columns:
+            # Simulate dropping a piece in the column
             temp_board = copy.deepcopy(board)
             drop_piece_in_simulation(temp_board, column, "O")
+
+            # Recursively call minimax for the opponent's turn (minimizing player)
             new_score = minimax(temp_board, depth - 1, False)[1]
+
+            # Update the best score and column if a better score is found
             if new_score > value:
                 value = new_score
                 best_column = column
+
         return best_column, value
-    else:
-        value = float("inf")
-        best_column = random.choice(valid_columns)
+    else:  # Opponent's turn (minimize score)
+        value = float("inf")  # Start with the best possible score for minimizing
+        best_column = random.choice(valid_columns)  # Pick a random valid column initially
+
+        # Iterate through all valid columns
         for column in valid_columns:
+            # Simulate dropping a piece in the column
             temp_board = copy.deepcopy(board)
             drop_piece_in_simulation(temp_board, column, "X")
+
+            # Recursively call minimax for the AI's turn (maximizing player)
             new_score = minimax(temp_board, depth - 1, True)[1]
+
+            # Update the best score and column if a worse score is found
             if new_score < value:
                 value = new_score
                 best_column = column
+
         return best_column, value
 
 def ai_move():
@@ -123,10 +201,7 @@ def reset_game():
     current_player = "X"
     canvas.delete("all")
     draw_board()
-def switch():
-    game_frame.pack_forget()
-    menu_frame.pack()   
-    #function for button 
+
 def update_scores():
     score_label.config(text=f"Player X: {scores['X']}  |  Player O: {scores['O']}")
 
@@ -158,8 +233,27 @@ def handle_click(event):
     if column >= 0 and column < COLUMNS:
         drop_piece(column)
 
-# Initialize the game
-board = create_board()
+def choose_mode(mode):
+    global player_vs_ai
+    player_vs_ai = (mode == "AI")
+    menu_frame.pack_forget()
+    if player_vs_ai:
+        difficulty_frame.pack()  # Show the difficulty selection screen
+    else:
+        game_frame.pack()
+        reset_game()
+
+def choose_difficulty(difficulty):
+    global AI_DEPTH
+    if difficulty == "Easy":
+        AI_DEPTH = 1
+    elif difficulty == "Normal":
+        AI_DEPTH = 3
+    elif difficulty == "Advanced":
+        AI_DEPTH = 4
+    difficulty_frame.pack_forget()
+    game_frame.pack()
+    reset_game()
 
 # Initialize the game
 board = create_board()
@@ -176,9 +270,9 @@ menu_frame.pack()
 # When clicked, it calls choose_mode("AI") and navigates to the difficulty selection screen.
 tk.Label(menu_frame, text="Choose Game Mode", font=("Arial", 20), bg="#f0f0f0").pack(pady=10)
 tk.Button(menu_frame, text="Player vs Player", font=("Arial", 16),
-          command=lambda: choose_mode("PvP"), bg="lightgreen", width=20).pack(pady=5)
+            command=lambda: choose_mode("PvP"), bg="lightgreen", width=20).pack(pady=5)
 tk.Button(menu_frame, text="Player vs AI", font=("Arial", 16),
-          command=lambda: choose_mode("AI"), bg="lightblue", width=20).pack(pady=5)
+            command=lambda: choose_mode("AI"), bg="lightblue", width=20).pack(pady=5)
 
 # Difficulty Frame
 difficulty_frame = tk.Frame(root, bg="#f0f0f0")
@@ -186,10 +280,13 @@ difficulty_frame = tk.Frame(root, bg="#f0f0f0")
 tk.Label(difficulty_frame, text="Select Difficulty", font=("Arial", 20), bg="#f0f0f0").pack(pady=10)
 # Button for Easy difficulty
 tk.Button(difficulty_frame, text="Easy", font=("Arial", 16),
-          command=lambda: choose_difficulty("Easy"), bg="lightgreen", width=20).pack(pady=5)
+            command=lambda: choose_difficulty("Easy"), bg="lightgreen", width=20).pack(pady=5)
+# Button for Normal difficulty
+tk.Button(difficulty_frame, text="Normal", font=("Arial", 16),
+            command=lambda: choose_difficulty("Normal"), bg="blue", width=20).pack(pady=5)
 # Button for Advanced difficulty
 tk.Button(difficulty_frame, text="Advanced", font=("Arial", 16),
-          command=lambda: choose_difficulty("Advanced"), bg="red", width=20).pack(pady=5)
+            command=lambda: choose_difficulty("Advanced"), bg="red", width=20).pack(pady=5)
 
 # Game Frame
 game_frame = tk.Frame(root, bg="#f0f0f0") # Create the frame for the game board
@@ -209,8 +306,4 @@ score_label.pack(pady=10) # Add some padding for better spacing
 # This button allows the user to reset the game at any time. It calls the reset_game() function.
 restart_button = tk.Button(game_frame, text="Restart Game", font=("Arial", 16), command=reset_game, bg="orange")
 restart_button.pack(pady=10)
-restart_button = tk.Button(game_frame, text="Switch Mode", font=("Arial", 14), command=switch, bg="orange")
-restart_button.pack(pady=10)      #button of returning to modes
 root.mainloop()
-
-
