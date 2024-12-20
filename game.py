@@ -202,6 +202,10 @@ def reset_game():
     canvas.delete("all")
     draw_board()
 
+def switch():
+   game_frame.pack_forget()
+   menu_frame.pack()   
+    
 def update_scores():
     score_label.config(text=f"Player X: {scores['X']}  |  Player O: {scores['O']}")
 
@@ -306,4 +310,7 @@ score_label.pack(pady=10) # Add some padding for better spacing
 # This button allows the user to reset the game at any time. It calls the reset_game() function.
 restart_button = tk.Button(game_frame, text="Restart Game", font=("Arial", 16), command=reset_game, bg="orange")
 restart_button.pack(pady=10)
+switch_button = tk.Button(game_frame, text="Switch Mode", font=("Arial", 14), command=switch, bg="orange")
+switch_button.pack(pady=10)
+
 root.mainloop()
