@@ -44,15 +44,15 @@ def check_win(board, piece):
     return False
 
 def is_draw(board):
-    return all(board[0][col] != " " for col in range(COLUMNS))
+    return all(board[0][col] != " " for col in range(COLUMNS))   
 
 def get_valid_columns(board):
-    return [col for col in range(COLUMNS) if board[0][col] == " "]
+    return [col for col in range(COLUMNS) if board[0][col] == " "]      # check  empty columns 
 
 def drop_piece_in_simulation(board, column, piece):
     for row in reversed(range(ROWS)):
         if board[row][column] == " ":
-            board[row][column] = piece
+            board[row][column] = piece           # ensure  piece drop in accurate locations
             return True
     return False
 
@@ -173,7 +173,7 @@ def ai_move():
 
 def drop_piece(column):
     global current_player, board
-
+ # acknowledge  of  different states of the game
     for row in reversed(range(ROWS)):
         if board[row][column] == " ":
             board[row][column] = current_player
@@ -194,6 +194,7 @@ def drop_piece(column):
                     root.after(500, ai_move)
             return
     messagebox.showwarning("Invalid Move", "Column is full!")
+    
 
 def reset_game():
     global board, current_player
